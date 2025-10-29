@@ -6,4 +6,11 @@ export class EncryptionService {
     hash.update(data);
     return hash.digest('hex');
   }
+  static async compare(password: string, userPassword: string): Promise<boolean> {
+    if( await EncryptionService.hash(password) !== userPassword){
+      return false
+    }else {
+      return true
+    }
+  }
 }

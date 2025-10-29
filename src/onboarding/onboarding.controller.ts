@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from "@nestjs/common";
+import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import { OnboardingService } from "./onboarding.service";
 import { RegisterDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login-user.dto";
@@ -16,7 +16,7 @@ export class OnboardingController{
         private readonly otpService: OtpService ) {}
     @Post('signup')
     async register(@Body() registerDto: RegisterDto) {
-        return this.onboardingService.registerUser(registerDto)
+        return await this.onboardingService.registerUser(registerDto)
     }
 
     @Post('login')
@@ -31,17 +31,17 @@ export class OnboardingController{
     @Post('logout')
     async logout(@Res({ passthrough: true }) res: Response) {
         this.authService.clearCookie(res);
-        return this.authService.logoutUser()
+        return await this.authService.logoutUser()
     }
 
     @Post('verify-otp')
     async verifyOtp(@Body() verifyDto: VerifyDto){
-        return this.otpService.verifyOtp(verifyDto.phoneNumber, verifyDto.otp)
+        return await this.otpService.verifyOtp(verifyDto.phoneNumber, verifyDto.otp)
     }
 
     @Post('resend-otp')
     async resendOtp(@Body() resendDto: ResendDto){
-        return this.otpService.resendOtp(resendDto.phoneNumber)
+        return await this.otpService.resendOtp(resendDto.phoneNumber)
     }
 
 }

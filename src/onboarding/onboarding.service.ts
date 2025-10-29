@@ -8,6 +8,11 @@ import { LoginDto } from "./dto/login-user.dto";
 import { RoleType } from "src/interfaces/db.enums";
 import { AuthService } from "src/auth/auth.service";
 import { OtpService } from "./otp.service";
+import { ForgotPasswordDto, ResetPasswordDto } from "./dto/resend-password.dto";
+import { randomBytes } from "crypto";
+import { Auth_Password } from "src/database/entity/user/auth_password";
+import { EmailService } from "src/helpers/email.service";
+import { use } from "passport";
 
 
 export class OnboardingService{
@@ -15,12 +20,16 @@ export class OnboardingService{
         //private readonly logger: Logger,
         private readonly authService: AuthService,
         private readonly otpService: OtpService,
+        private readonly emailService: EmailService,
         @InjectRepository(User)
-        private readonly userRepository: Repository<User>
+        private readonly userRepository: Repository<User>,
+        @InjectRepository(Auth_Password)
+        private readonly passwordRepository: Repository<Auth_Password>
     ){}
 
     async registerUser(registerDto: RegisterDto){
         const {email, phoneNumber,confirmPassword,firstName,lastName} = registerDto
+        let {role} = registerDto
         const user = await this.userRepository.findOne({where: {email}})
         if(user){
             throw new BadRequestException('user with email exists')
@@ -28,6 +37,9 @@ export class OnboardingService{
         const phone = await this.userRepository.findOne({where: {phoneNumber}})
         if(phone){
             throw new BadRequestException('user with phone number exists')
+        }
+        if(!role){
+            role = RoleType.USER
         }
         if(registerDto.password !== confirmPassword){
             throw new BadRequestException('password must match')
@@ -49,6 +61,7 @@ export class OnboardingService{
 
     async login(loginDto: LoginDto){
         const{email, password} = loginDto;
+        let role = loginDto.role
 
         const user = await this.userRepository.findOne({where: {email}})
         if(!user){
@@ -62,13 +75,71 @@ export class OnboardingService{
             await this.otpService.generateOtp(user.phoneNumber)
             throw new BadRequestException('Otp has been sent to your number, verify first')
         }
-        const userId = user.id;
-        const userRole = RoleType.USER;
-        const accessToken = await this.authService.generateUserToken(userId,userRole)
+        const userId = user.id
+        role = role || RoleType.USER
+        const accessToken = await this.authService.generateUserToken(userId, role)
         return {
             message:'Login successful',
             accessToken,
             user
         }
     }
-} 
+
+    async sendPasswordToken(forgotPasswordDto: ForgotPasswordDto){
+        const existingUser = await this.userRepository.findOne({where: {email: forgotPasswordDto.email}})
+        if(!existingUser){
+            throw new NotFoundException('No user with this email')
+        }
+        const passwordToken = randomBytes(8).toString('hex')
+        const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000) //1hr
+
+        const existingToken = await this.passwordRepository.findOne({where: {userId: existingUser.id}})
+        if(existingToken){
+            existingToken.passwordToken = passwordToken
+            existingToken.expiresAt = expiresAt
+            await this.passwordRepository.save(existingToken)
+        }else{
+            await this.passwordRepository.save({
+            userId: existingUser.id,
+            passwordToken,
+            expiresAt,
+        })
+        }
+        await this.emailService.sendPasswordToken(forgotPasswordDto.email, passwordToken)
+        return{
+            message: `Token successfully sent to ${forgotPasswordDto.email}`
+        }
+    } 
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto){
+        const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
+        if (!user) throw new NotFoundException('No User with this email');
+
+        const pass = await this.passwordRepository.findOne({where: {userId: user.id}})
+        if(!pass) throw new NotFoundException('No password Token for this User')
+
+        if (pass.passwordToken !== resetPasswordDto.passwordToken
+            || !pass.expiresAt || new Date() > pass.expiresAt) {
+        throw new BadRequestException('Invalid or Expired Token');
+        }
+
+        if(resetPasswordDto.password !== resetPasswordDto.confirmPassword){
+            throw new BadRequestException('Password must match')
+        }
+
+        user.password = await EncryptionService.hash(resetPasswordDto.password)
+        pass.passwordToken = null;
+        pass.expiresAt = null;
+
+        await this.userRepository.save(user);
+        await this.passwordRepository.save(pass);
+
+        return{
+            message: 'Password successfully changed'
+        }
+    }
+
+    validateGoogleUser(details: Partial<RegisterDto>){
+        console.log('AuthService')
+    }
+}

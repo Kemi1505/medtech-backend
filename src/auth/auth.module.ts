@@ -17,8 +17,7 @@ import { RedisCacheService } from 'src/cache/redis.cache.service';
     {
       provide: RedisCacheService,
       useClass: process.env.REDIS_ENABLED === 'true'?
-      RedisCacheService
-      : MockRedisCacheService
+      RedisCacheService : MockRedisCacheService
     }],
   exports: [AuthService, AuthorizationMiddleware],
 })

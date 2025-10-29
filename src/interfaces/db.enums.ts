@@ -35,3 +35,12 @@ export enum BloodGroup {
   BNegative = 'B-',
   BPositive = 'B+',
 }
+
+export enum CountryCodes{
+    Nigeria = '234',
+    Kenya = '254',
+    Ghana = '233',
+    South_Africa = '27',
+    Rwanda = '250', 
+    Tanzania = '255',
+}

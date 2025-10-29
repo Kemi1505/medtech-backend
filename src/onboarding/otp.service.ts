@@ -25,7 +25,7 @@ export class OtpService{
         if (!user) {
         throw new NotFoundException('User not Found');
         }
-        const otp = Math.floor(1000 + Math.random() * 900000).toString();
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5min
         const userId = user.id
 
@@ -41,7 +41,7 @@ export class OtpService{
             expiresAt: expiresAt,
         })
         }
-        this.smsService.sendOtp(newNumber, otp);
+        await this.smsService.sendOtp(newNumber, otp);
         return{
             message: `Otp successfully sent to ${newNumber}`
         }
@@ -64,7 +64,7 @@ export class OtpService{
             throw new NotFoundException('No otp, kindly generate one')
         }
 
-        if(findotp.otp != otp 
+        if(findotp.otp !== otp 
             || !findotp.expiresAt || new Date() > findotp.expiresAt){
             throw new BadRequestException('Invalid or expired Otp')
         }

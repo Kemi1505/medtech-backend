@@ -16,7 +16,6 @@ import { Repository } from 'typeorm';
 import { RedisCacheService } from 'src/cache/redis.cache.service';
 import { cookieConfig} from 'src/config/token.config';
 import { Response } from 'express';
-import th from 'zod/v4/locales/th.js';
 
 @Injectable()
 export class MockRedisCacheService {

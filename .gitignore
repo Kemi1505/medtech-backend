@@ -2,6 +2,7 @@
 /dist
 /node_modules
 /build
+src/google/
 
 # Logs
 logs
@@ -42,6 +43,7 @@ lerna-debug.log*
 .env.production.local
 .env.local
 .env.example
+.google
 
 # temp directory
 .temp

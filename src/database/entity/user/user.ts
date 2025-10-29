@@ -1,3 +1,4 @@
+import { RoleType } from 'src/interfaces/db.enums';
 import {
   Entity,
   Index,
@@ -6,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { nullable } from 'zod';
 
 @Entity({ name: 'users' })
 export class User {
@@ -35,6 +37,9 @@ export class User {
 
   @Column({ nullable: false, length: 50 })
   lastName: string;
+
+  @Column({nullable: false, default: RoleType.USER})
+  role?: RoleType;
 
   @CreateDateColumn({
     nullable: false,

@@ -1,16 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
+import { CountryCodes } from 'src/interfaces/db.enums';
 
 export class PhoneService {
-  // Common African country dialing codes
-  private static readonly countryCodes: Record<string, string> = {
-    NG: '234', // Nigeria
-    KE: '254', // Kenya
-    GH: '233', // Ghana
-    ZA: '27',  // South Africa
-    RW: '250', // Rwanda
-    TZ: '255', // Tanzania
-  };
-
   static formatPhoneNumber(phoneNumber: string): string {
     if (!phoneNumber) {
       throw new BadRequestException('Phone number is required');
@@ -25,7 +16,7 @@ export class PhoneService {
     }
 
     //Check if it already starts with a known country code
-    const countryCode = Object.values(this.countryCodes).find((code) =>
+    const countryCode = Object.values(CountryCodes).find((code) =>
       phoneNumber.startsWith(code),
     );
 
@@ -35,11 +26,11 @@ export class PhoneService {
       if (nationalNumber.startsWith('0')) {
         nationalNumber = nationalNumber.slice(1);
       }
-      return `+${countryCode}${nationalNumber}`;
+      return `${countryCode}${nationalNumber}`;
     }
 
     // Default to Nigeria if no known code detected
-    const defaultCode = this.countryCodes.NG;
+    const defaultCode = CountryCodes.Nigeria;
 
     // Validate Nigerian number (must be 11 digits and start with 0)
     if (!/^0[789]\d{9}$/.test(phoneNumber)) {
@@ -47,6 +38,6 @@ export class PhoneService {
     }
 
     // Remove leading 0 and prepend +234
-    return `+${defaultCode}${phoneNumber.slice(1)}`;
+    return `${defaultCode}${phoneNumber.slice(1)}`;
   }
 }

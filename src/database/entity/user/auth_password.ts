@@ -1,3 +1,4 @@
+import { RoleType } from 'src/interfaces/db.enums';
 import {
   Entity,
   Index,
@@ -7,8 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'auth_otps' })
-export class Auth_Otp {
+@Entity({ name: 'auth_passwords' })
+export class Auth_Password {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -17,8 +18,12 @@ export class Auth_Otp {
   userId: string;
 
   @Index()
+  @Column({ nullable: false, default: 'USER'})
+  role: RoleType;
+
+  @Index()
   @Column({ type: 'varchar', nullable: true })
-  otp: string|null;
+  passwordToken: string|null;
 
   @Index()
   @Column({ type: 'timestamptz', nullable: true })

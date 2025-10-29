@@ -1,11 +1,13 @@
 import { 
     IsEmail, 
     IsNotEmpty, 
+    IsOptional, 
     IsString, 
     MinLength } from "class-validator";
+import { RoleType } from "src/interfaces/db.enums";
 
 export class RegisterDto{
-    @IsNotEmpty({message: 'Please provde first Name'})
+    @IsNotEmpty({message: 'Please provide first Name'})
     @IsString()
     @MinLength(3, {message: 'first name should be at least 3 characters'})
     firstName: string;
@@ -14,6 +16,9 @@ export class RegisterDto{
     @IsString()
     @MinLength(3, {message: 'last name should be at least 3 characters'})
     lastName: string;
+
+    @IsOptional()
+    role: RoleType;
 
     @IsNotEmpty({message: 'Please provide your email'})
     @IsEmail({},{message: 'Please provide a valid email'})
