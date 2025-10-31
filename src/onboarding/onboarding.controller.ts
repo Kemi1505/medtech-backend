@@ -1,12 +1,15 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { OnboardingService } from "./onboarding.service";
 import { RegisterDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login-user.dto";
-import type { Response } from "express";
+import type { Request,Response } from "express";
 import { AuthService } from "src/auth/auth.service";
 import { VerifyDto } from "./dto/verify-otp.dto";
 import { OtpService } from "./otp.service";
 import { ResendDto } from "./dto/resend-otp.dto";
+import { GoogleAuthGuard } from "src/google/guards";
+import { RoleType } from "src/interfaces/db.enums";
+import { User } from "src/database/entity/user/user";
 
 @Controller()
 export class OnboardingController{
@@ -42,6 +45,26 @@ export class OnboardingController{
     @Post('resend-otp')
     async resendOtp(@Body() resendDto: ResendDto){
         return await this.otpService.resendOtp(resendDto.phoneNumber)
+    }
+
+    @Get('google/login')
+    @UseGuards(GoogleAuthGuard)
+    handleLogin() {
+        return {
+            msg: 'Redirecting to google...'}
+    }
+
+    @Get('google/redirect')
+    @UseGuards(GoogleAuthGuard)
+    async handleredirect(@Req() request: Request) {
+        const user = request.user as User;
+        const userId = user.id;
+        const accessToken = await this.authService.generateUserToken(userId, RoleType.USER)
+        return {
+            msg: 'Login',
+            accessToken,
+            user
+        }
     }
 
 }

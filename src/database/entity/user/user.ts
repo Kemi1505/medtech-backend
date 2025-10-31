@@ -1,4 +1,5 @@
-import { RoleType } from 'src/interfaces/db.enums';
+import { AuthModule } from 'src/auth/auth.module';
+import { AuthMethod, RoleType } from 'src/interfaces/db.enums';
 import {
   Entity,
   Index,
@@ -40,6 +41,9 @@ export class User {
 
   @Column({nullable: false, default: RoleType.USER})
   role?: RoleType;
+
+  @Column({nullable: false, default: AuthMethod.EMAIL_AND_PASSWORD})
+  authType?: AuthModule
 
   @CreateDateColumn({
     nullable: false,

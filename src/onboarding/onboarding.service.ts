@@ -5,7 +5,7 @@ import { EncryptionService } from "src/helpers/encryption.service";
 import { Repository } from "typeorm";
 import { RegisterDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login-user.dto";
-import { RoleType } from "src/interfaces/db.enums";
+import { AuthMethod, RoleType } from "src/interfaces/db.enums";
 import { AuthService } from "src/auth/auth.service";
 import { OtpService } from "./otp.service";
 import { ForgotPasswordDto, ResetPasswordDto } from "./dto/resend-password.dto";
@@ -71,7 +71,7 @@ export class OnboardingService{
         if(hashedPassword !== user.password){
             throw new BadRequestException('Invalid password')
         }
-        if(!user.phoneVerified){
+        if(!user.phoneVerified && user.authType!== 'GOOGLE'){
             await this.otpService.generateOtp(user.phoneNumber)
             throw new BadRequestException('Otp has been sent to your number, verify first')
         }
@@ -139,7 +139,37 @@ export class OnboardingService{
         }
     }
 
-    validateGoogleUser(details: Partial<RegisterDto>){
-        console.log('AuthService')
+    async validateGoogleUser(details: Partial<RegisterDto>){
+        let user = await this.userRepository.findOne({where: {email: details.email}})
+        
+        if (!user){
+            const authType = AuthMethod.GOOGLE;
+            const emailVerified = true;
+             user = this.userRepository.create({
+                ...details,authType,emailVerified
+            })     
+        }
+        user = await this.userRepository.save(user)
+        return user;
     }
+
+//     async registerDoctor(adminId: number, dto: RegisterDto) {
+//     const admin = await this.userRepository.findOne({ where: { id: adminId } });
+//     //VALIDATE ADMIN
+
+//   const existingDoctor = await this.userRepository.findOne({ where: { email: dto.email } });
+//   if (existingDoctor) throw new BadRequestException('Doctor already exists');
+
+//   const doctor = this.userRepository.create({
+//     email: dto.email,
+//     firstName: dto.firstName,
+//     lastName: dto.lastName,
+//     roleType: RoleType.DOCTOR,
+//     authMethod: AuthMethod.EMAIL_AND_PASSWORD,
+//     password: await EncryptionService.hash(dto.password) 
+//   });
+
+//   return await this.userRepository.save(doctor);
+// }
+
 }
