@@ -17,9 +17,6 @@ const database: TypeOrmModuleOptions = {
   database: <string>process.env.DB_NAME,
   // synchronize: <string>process.env.MEDTECH_ENV === 'development',
   synchronize: true,
-  // ssl: {
-  //       rejectUnauthorized: false,
-  //     },
 };
 
 export default () => ({
