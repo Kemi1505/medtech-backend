@@ -1,22 +1,40 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { 
+    Controller, 
+    Body, 
+    Get, 
+    Post, 
+    Query, 
+    Req, 
+    Res, 
+    UseGuards } from "@nestjs/common";
 import { OnboardingService } from "./onboarding.service";
-import { RegisterDto } from "./dto/register-user.dto";
-import { LoginDto } from "./dto/login-user.dto";
+import { LoginDto } from "src/dtos/login-user.dto";
 import type { Request,Response } from "express";
 import { AuthService } from "src/auth/auth.service";
-import { VerifyDto } from "./dto/verify-otp.dto";
 import { OtpService } from "./otp.service";
-import { ResendDto } from "./dto/resend-otp.dto";
-import { GoogleAuthGuard } from "src/google/guards";
 import { RoleType } from "src/interfaces/db.enums";
-import { User } from "src/database/entity/user/user";
+import { Role } from "src/auth/roles/roles.decorator";
+import { InviteDoctorDto } from "src/dtos/invite-doctor";
+import { ReqBody } from "src/interfaces/request.body";
+import { InviteAdminDto } from "src/dtos/invite-admin";
+import {  CreateDoctorOrAdminDto } from "src/dtos/create-doctor.dto";
+import { ForgotPasswordDto, ResetPasswordDto } from "src/dtos/resend-password.dto";
+import { TokenGuard } from "src/guards/tokenGuard";
+import { RegisterDto } from "src/dtos/register-user.dto";
+import { VerifyDto } from "src/dtos/verify-otp.dto";
+import { ResendDto } from "src/dtos/resend-otp.dto";
+import { RoleGuard } from "src/auth/roles/role/role.guard";
+import { InviteService } from "./invite.service";
+import { GoogleAuthGuard } from "src/guards/googleGuard";
 
 @Controller()
 export class OnboardingController{
     constructor(
         private readonly onboardingService: OnboardingService,
         private readonly authService: AuthService,
-        private readonly otpService: OtpService ) {}
+        private readonly otpService: OtpService, 
+        private readonly inviteService: InviteService,    
+    ) {}
     @Post('signup')
     async register(@Body() registerDto: RegisterDto) {
         return await this.onboardingService.registerUser(registerDto)
@@ -47,6 +65,16 @@ export class OnboardingController{
         return await this.otpService.resendOtp(resendDto.phoneNumber)
     }
 
+    @Post('send-passwordToken')
+    async sendPasswordtoken(@Body() forgotPasswordDto: ForgotPasswordDto){
+        return await this.onboardingService.sendPasswordToken(forgotPasswordDto)
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto){
+        return await this.onboardingService.resetPassword(resetPasswordDto)
+    }
+
     @Get('google/login')
     @UseGuards(GoogleAuthGuard)
     handleLogin() {
@@ -56,10 +84,11 @@ export class OnboardingController{
 
     @Get('google/redirect')
     @UseGuards(GoogleAuthGuard)
-    async handleredirect(@Req() request: Request) {
-        const user = request.user as User;
-        const userId = user.id;
+    async handleredirect(@Req() request: Request, @Res() response: Response) {
+        const user = request.user as ReqBody;
+        const userId = user.userId;
         const accessToken = await this.authService.generateUserToken(userId, RoleType.USER)
+        this.authService.setCookie(response, accessToken)
         return {
             msg: 'Login',
             accessToken,
@@ -67,4 +96,46 @@ export class OnboardingController{
         }
     }
 
+    @UseGuards(TokenGuard,RoleGuard)
+    @Role([RoleType.ADMIN,RoleType.SUPER_ADMIN])
+    @Post('invite-doctor')    
+    async inviteDoctor(@Body() inviteDoctorDto: InviteDoctorDto, @Req() request: Request){
+        const inviter = request.user as ReqBody
+        const invitedBy = inviter.userId
+        return await this.inviteService.inviteDoctor(inviteDoctorDto, invitedBy)
+    }
+
+    @UseGuards(TokenGuard, RoleGuard)
+    @Role([RoleType.SUPER_ADMIN])
+    @Post('invite-admin')
+    async inviteAdmin(@Body() inviteAdminDto: InviteAdminDto, @Req() request: Request){
+        const inviter = request.user as ReqBody
+        const invitedBy = inviter.userId
+        return await this.inviteService.inviteAdmin(inviteAdminDto, invitedBy)
+    }
+
+    @Post('create-doctor')
+    async createDoctor(@Query('token') token: string, @Body() createDoctorDto: CreateDoctorOrAdminDto){
+        const verify = await this.inviteService.verifyToken(token)
+        if (verify === true){
+            return await this.inviteService.createDoctor(createDoctorDto, token)
+        }
+
+    }
+
+    @Post('create-admin')
+    async createAdmin(@Query('token') token: string, @Body() createAdminDto: CreateDoctorOrAdminDto){
+        const verify = await this.inviteService.verifyToken(token)
+        if (verify === true){
+            return await this.inviteService.createAdmin(createAdminDto, token)
+        }
+    }
+
+    @Get('dashboard')
+    @UseGuards(TokenGuard)
+    dash(){
+        return{
+            msg: "you have reached dashboard"
+        }
+    }
 }

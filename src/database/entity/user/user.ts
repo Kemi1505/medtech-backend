@@ -1,4 +1,3 @@
-import { AuthModule } from 'src/auth/auth.module';
 import { AuthMethod, RoleType } from 'src/interfaces/db.enums';
 import {
   Entity,
@@ -8,7 +7,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { nullable } from 'zod';
 
 @Entity({ name: 'users' })
 export class User {
@@ -16,7 +14,7 @@ export class User {
   id: string;
 
   @Index({ unique: true })
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   phoneNumber: string;
 
   @Index({ unique: true })
@@ -24,7 +22,7 @@ export class User {
   email: string;
 
   @Index({ unique: false })
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   password: string;
 
   @Column({ nullable: true })
@@ -43,7 +41,7 @@ export class User {
   role?: RoleType;
 
   @Column({nullable: false, default: AuthMethod.EMAIL_AND_PASSWORD})
-  authType?: AuthModule
+  authType?: AuthMethod
 
   @CreateDateColumn({
     nullable: false,

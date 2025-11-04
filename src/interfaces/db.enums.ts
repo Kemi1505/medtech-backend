@@ -3,6 +3,7 @@ export enum RoleType {
   USER = 'USER',
   DOCTOR = 'DOCTOR',
   ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
 }
 
 export enum AuthMethod {
@@ -43,4 +44,13 @@ export enum CountryCodes{
     South_Africa = '27',
     Rwanda = '250', 
     Tanzania = '255',
+}
+
+export enum Department{
+  EMERGENCY = 'EMERGENCY',
+  CARDIOLOGY = 'CARDIOLOGY',
+  NEUROLOGY = 'NEUROLOGY',
+  GYNECOLOGY = 'GYNECOLOGY',
+  DERMATOLOGY = 'DERMATOLOGY',
+  SURGERY = 'SURGERY'
 }

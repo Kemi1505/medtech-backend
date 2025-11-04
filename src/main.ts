@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from "cookie-parser";
+import { SuperAdminService } from './helpers/superAdmin';
 
 require('dotenv').config();
 async function bootstrap() {
@@ -12,6 +13,8 @@ async function bootstrap() {
       transform: true
     })
   )
+  
+  await app.get(SuperAdminService).isSuperAdmin()
   app.use(cookieParser())
   await app.listen(process.env.PORT ?? 3000);
 }

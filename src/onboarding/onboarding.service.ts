@@ -3,17 +3,15 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/database/entity/user/user";
 import { EncryptionService } from "src/helpers/encryption.service";
 import { Repository } from "typeorm";
-import { RegisterDto } from "./dto/register-user.dto";
-import { LoginDto } from "./dto/login-user.dto";
+import { RegisterDto } from "src/dtos/register-user.dto";
+import { LoginDto } from "src/dtos/login-user.dto";
 import { AuthMethod, RoleType } from "src/interfaces/db.enums";
 import { AuthService } from "src/auth/auth.service";
 import { OtpService } from "./otp.service";
-import { ForgotPasswordDto, ResetPasswordDto } from "./dto/resend-password.dto";
+import { ForgotPasswordDto, ResetPasswordDto } from "src/dtos/resend-password.dto";
 import { randomBytes } from "crypto";
 import { Auth_Password } from "src/database/entity/user/auth_password";
 import { EmailService } from "src/helpers/email.service";
-import { use } from "passport";
-
 
 export class OnboardingService{
     constructor(
@@ -29,7 +27,6 @@ export class OnboardingService{
 
     async registerUser(registerDto: RegisterDto){
         const {email, phoneNumber,confirmPassword,firstName,lastName} = registerDto
-        let {role} = registerDto
         const user = await this.userRepository.findOne({where: {email}})
         if(user){
             throw new BadRequestException('user with email exists')
@@ -37,9 +34,6 @@ export class OnboardingService{
         const phone = await this.userRepository.findOne({where: {phoneNumber}})
         if(phone){
             throw new BadRequestException('user with phone number exists')
-        }
-        if(!role){
-            role = RoleType.USER
         }
         if(registerDto.password !== confirmPassword){
             throw new BadRequestException('password must match')
@@ -61,7 +55,6 @@ export class OnboardingService{
 
     async login(loginDto: LoginDto){
         const{email, password} = loginDto;
-        let role = loginDto.role
 
         const user = await this.userRepository.findOne({where: {email}})
         if(!user){
@@ -76,7 +69,7 @@ export class OnboardingService{
             throw new BadRequestException('Otp has been sent to your number, verify first')
         }
         const userId = user.id
-        role = role || RoleType.USER
+        const role = user.role as RoleType
         const accessToken = await this.authService.generateUserToken(userId, role)
         return {
             message:'Login successful',
@@ -107,9 +100,16 @@ export class OnboardingService{
         }
         await this.emailService.sendPasswordToken(forgotPasswordDto.email, passwordToken)
         return{
-            message: `Token successfully sent to ${forgotPasswordDto.email}`
+            message: `Token ${passwordToken} successfully sent to ${forgotPasswordDto.email}`
         }
-    } 
+    }
+    
+    async verifyPasswordToken(passwordToken: string){
+        const token = await this.passwordRepository.findOne({where: {passwordToken}})
+        if(!token || !token.expiresAt || new Date() > token.expiresAt){
+            throw new BadRequestException('Invalid or Expired Token');
+        }
+    }
 
     async resetPassword(resetPasswordDto: ResetPasswordDto){
         const user = await this.userRepository.findOne({ where: { email: resetPasswordDto.email } });
@@ -152,24 +152,4 @@ export class OnboardingService{
         user = await this.userRepository.save(user)
         return user;
     }
-
-//     async registerDoctor(adminId: number, dto: RegisterDto) {
-//     const admin = await this.userRepository.findOne({ where: { id: adminId } });
-//     //VALIDATE ADMIN
-
-//   const existingDoctor = await this.userRepository.findOne({ where: { email: dto.email } });
-//   if (existingDoctor) throw new BadRequestException('Doctor already exists');
-
-//   const doctor = this.userRepository.create({
-//     email: dto.email,
-//     firstName: dto.firstName,
-//     lastName: dto.lastName,
-//     roleType: RoleType.DOCTOR,
-//     authMethod: AuthMethod.EMAIL_AND_PASSWORD,
-//     password: await EncryptionService.hash(dto.password) 
-//   });
-
-//   return await this.userRepository.save(doctor);
-// }
-
 }

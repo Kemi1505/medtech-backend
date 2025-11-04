@@ -1,5 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
-import { RoleType } from "src/interfaces/db.enums";
+import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
 
 export class LoginDto {
     @IsNotEmpty({message: 'Please provide your email'})
@@ -11,6 +10,4 @@ export class LoginDto {
     @MinLength(6, {message: 'password should be at least 6 characters'})
     password: string
 
-    @IsOptional()
-    role: RoleType
 } 

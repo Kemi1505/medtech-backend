@@ -10,12 +10,29 @@ import { Auth_Otp } from "src/database/entity/user/auth_otp";
 import { EmailService } from "src/helpers/email.service";
 import { Auth_Password } from "src/database/entity/user/auth_password";
 import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { InviteToken } from "src/database/entity/user/invite.token";
+import { SuperAdminService } from "src/helpers/superAdmin";
+import { InviteService } from "./invite.service";
+
 
 @Module({
-    imports:[TypeOrmModule.forFeature([User,Auth_Otp,Auth_Password]),
+    imports:[TypeOrmModule.forFeature([
+        User,
+        Auth_Otp,
+        Auth_Password,
+        InviteToken]),
     AuthModule],
     controllers: [OnboardingController],
-    providers: [OnboardingService,OtpService,SmsService,ConfigService,EmailService]
+    providers: [
+        OnboardingService,
+        OtpService,
+        SmsService,
+        ConfigService,
+        EmailService,
+        JwtService,
+        SuperAdminService, 
+        InviteService]
 })
 
 export class OnboardingModule{}

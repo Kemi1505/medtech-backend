@@ -1,4 +1,3 @@
-import { Role } from 'src/auth/roles/roles.decorator';
 import { RoleType } from 'src/interfaces/db.enums';
 import {
   Column,

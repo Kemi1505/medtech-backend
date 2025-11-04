@@ -56,7 +56,7 @@ export class SmsService {
 
       const response = await axios.post(url, data, { headers });
 
-      this.logger.log(`OTP sent successfully to ${sendchampNumber}. Status: ${response.data.status}`);
+      this.logger.log(`OTP ${otp} sent successfully to ${sendchampNumber}. Status: ${response.data.status}`);
       return { success: true, message: 'OTP sent successfully' };
 
     } catch (error) {

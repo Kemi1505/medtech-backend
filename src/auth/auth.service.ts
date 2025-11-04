@@ -3,9 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  NotImplementedException,
 } from '@nestjs/common';
-import { JwtData } from './auth.dto';
 import * as jwt from 'jsonwebtoken';
 import { AuthMethod, RoleType } from 'src/interfaces/db.enums';
 import { config, USER_TOKEN_EXPIRY_IN_SECONDS } from '../constants/settings';
@@ -16,16 +14,11 @@ import { Repository } from 'typeorm';
 import { RedisCacheService } from 'src/cache/redis.cache.service';
 import { cookieConfig} from 'src/config/token.config';
 import { Response } from 'express';
+import { RegisterDto } from 'src/dtos/register-user.dto';
+import { User } from 'src/database/entity/user/user';
+import { JwtData } from 'src/dtos/auth.dto';
 
 @Injectable()
-export class MockRedisCacheService {
-  private readonly logger = new Logger(MockRedisCacheService.name);
-
-  async setEntityToken(...args: any[]) {
-    this.logger.log('Mock setEntityToken called');
-    return;
-  }
-}
 export class AuthService {
   private readonly encryptionKey: string;
   private readonly tokenGenerationException: HttpException;
@@ -35,6 +28,8 @@ export class AuthService {
     private readonly redisCacheService: RedisCacheService,
     @InjectRepository(AuthToken)
     private readonly userAuthTokenRepository: Repository<AuthToken>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>
   ) {
     this.encryptionKey = Buffer.from(config.secretKey, 'base64').toString();
     this.tokenGenerationException = new InternalServerErrorException(
@@ -110,6 +105,20 @@ export class AuthService {
       throw this.tokenGenerationException;
     }
   }
+  async validateGoogleUser(details: Partial<RegisterDto>){
+          let user = await this.userRepository.findOne({where: {email: details.email}})
+          
+          if (!user){
+              const authType = AuthMethod.GOOGLE;
+              const emailVerified = true;
+               user = this.userRepository.create({
+                  ...details,authType,emailVerified
+              })     
+          }
+          user = await this.userRepository.save(user)
+          return user;
+  }
+
   setCookie(res: Response, authToken: string){
       res.cookie(cookieConfig.name, authToken, cookieConfig.info)
   }

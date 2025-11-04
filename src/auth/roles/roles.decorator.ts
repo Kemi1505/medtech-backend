@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { AdminPermission, RoleType } from '../../interfaces/db.enums';
 
-export const Role = (arg: RoleType) => SetMetadata('role', arg);
-export const AdminPermissions = (arg: AdminPermission[]) =>
+export const Role = (arg: RoleType[]) => SetMetadata('role', arg);
+export const AdminPermissions = (arg: AdminPermission) =>
   SetMetadata('adminPermissions', arg);
 
 export const UserAgent = createParamDecorator(

@@ -5,7 +5,7 @@ export const cookieConfig = {
     info: {
         httpOnly: true, // prevents JavaScript access
         secure: process.env.NODE_ENV === 'production', // use HTTPS in prod
-        sameSite: 'strict' as const,
+        sameSite: 'lax' as const,
         maxAge: USER_TOKEN_EXPIRY_IN_SECONDS * 1000, 
     }
 }

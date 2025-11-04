@@ -6,7 +6,6 @@ import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingModule } from './onboarding/onboarding.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +22,6 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     OnboardingModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,],
 })
 export class AppModule {}
